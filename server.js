@@ -1,5 +1,4 @@
 const express = require('express');
-const dns = require('dns');
 const { URL } = require('url');
 const app = express();
 const port = process.env.PORT || 3000;
@@ -9,23 +8,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// Enable CORS
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  next();
-});
-
-// Database
+// Database sederhana
 const urlDatabase = [];
 let urlCounter = 1;
 
-// Validasi URL sesuai test case
-const validateUrl = (urlString) => {
+// Fungsi validasi URL yang diperbaiki
+const isValidUrl = (urlString) => {
   try {
     // Harus dimulai dengan http:// atau https://
-    if (!/^https?:\/\//i.test(urlString)) {
+    if (!urlString.match(/^https?:\/\//i)) {
       return false;
     }
     
@@ -36,54 +27,55 @@ const validateUrl = (urlString) => {
   }
 };
 
-// Routes
+// Route untuk POST URL
 app.post('/api/shorturl', (req, res) => {
   const { url: inputUrl } = req.body;
 
-  if (!validateUrl(inputUrl)) {
+  if (!isValidUrl(inputUrl)) {
     return res.json({ error: 'invalid url' });
   }
 
   // Cek jika URL sudah ada
-  const existingUrl = urlDatabase.find(item => item.original_url === inputUrl);
-  if (existingUrl) {
+  const existingEntry = urlDatabase.find(entry => entry.original_url === inputUrl);
+  if (existingEntry) {
     return res.json({
-      original_url: existingUrl.original_url,
-      short_url: existingUrl.short_url
+      original_url: existingEntry.original_url,
+      short_url: existingEntry.short_url
     });
   }
 
-  // Tambahkan URL baru
-  const newUrl = {
+  // Buat entry baru
+  const newEntry = {
     original_url: inputUrl,
     short_url: urlCounter
   };
 
-  urlDatabase.push(newUrl);
+  urlDatabase.push(newEntry);
   urlCounter++;
 
   res.json({
-    original_url: newUrl.original_url,
-    short_url: newUrl.short_url
+    original_url: newEntry.original_url,
+    short_url: newEntry.short_url
   });
 });
 
+// Route untuk redirect
 app.get('/api/shorturl/:short_url', (req, res) => {
-  const shortUrl = Number(req.params.short_url);
-  const urlEntry = urlDatabase.find(item => item.short_url === shortUrl);
+  const shortUrl = parseInt(req.params.short_url);
+  const entry = urlDatabase.find(item => item.short_url === shortUrl);
 
-  if (urlEntry) {
-    return res.redirect(302, urlEntry.original_url);
+  if (entry) {
+    res.redirect(entry.original_url);
   } else {
-    return res.json({ error: 'No short URL found for the given input' });
+    res.status(404).json({ error: 'No short URL found for the given input' });
   }
 });
 
-// Route untuk test
+// Route untuk frontend
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`Server running on http://localhost:${port}`);
 });
