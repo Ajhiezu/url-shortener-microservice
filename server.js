@@ -1,9 +1,7 @@
 const express = require('express');
 const dns = require('dns');
-const url = require('url');
-const { MongoClient } = require('mongodb');
+const { URL } = require('url');
 const mongoose = require('mongoose');
-const validUrl = require('valid-url');
 const cors = require('cors');
 const app = express();
 
@@ -27,11 +25,22 @@ const urlSchema = new mongoose.Schema({
 const URLModel = mongoose.model('URL', urlSchema);
 
 // Helper function to validate URL
-const validateUrl = (urlString) => {
+const validateUrl = async (urlString) => {
   try {
     const urlObj = new URL(urlString);
-    if (!urlObj.protocol || !urlObj.hostname) return false;
-    return validUrl.isWebUri(urlString);
+    if (!['http:', 'https:'].includes(urlObj.protocol)) {
+      return false;
+    }
+    
+    // Verify DNS lookup
+    await new Promise((resolve, reject) => {
+      dns.lookup(urlObj.hostname, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+    
+    return true;
   } catch (err) {
     return false;
   }
@@ -39,9 +48,9 @@ const validateUrl = (urlString) => {
 
 // Routes
 app.post('/api/shorturl', async (req, res) => {
-  const { url: originalUrl } = req.body;
+  const originalUrl = req.body.url;
   
-  if (!validateUrl(originalUrl)) {
+  if (!originalUrl || !(await validateUrl(originalUrl))) {
     return res.json({ error: 'invalid url' });
   }
 
@@ -81,11 +90,10 @@ app.post('/api/shorturl', async (req, res) => {
 
 app.get('/api/shorturl/:short_url', async (req, res) => {
   try {
-    const { short_url } = req.params;
-    const urlDoc = await URLModel.findOne({ short_url: parseInt(short_url) });
+    const urlDoc = await URLModel.findOne({ short_url: req.params.short_url });
     
     if (!urlDoc) {
-      return res.status(404).json({ error: 'short url not found' });
+      return res.status(404).json({ error: 'No short URL found for the given input' });
     }
     
     res.redirect(urlDoc.original_url);
