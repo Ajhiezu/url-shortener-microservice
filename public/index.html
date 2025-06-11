@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URL Shortener Microservice</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>URL Shortener Microservice</h1>
+    <form id="urlForm">
+      <input type="text" id="url_input" placeholder="Enter URL here..." required>
+      <button type="submit">POST URL</button>
+    </form>
+    <div id="result"></div>
+    <div class="examples">
+      <h3>Example Usage:</h3>
+      <p>POST <code>[project_url]/api/shorturl</code> - <code>https://www.google.com</code></p>
+      <p>GET <code>[project_url]/api/shorturl/1</code> - Will redirect to original URL</p>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
