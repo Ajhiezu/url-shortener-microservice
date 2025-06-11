@@ -4,7 +4,7 @@ document.getElementById('urlForm').addEventListener('submit', async (e) => {
   const resultDiv = document.getElementById('result');
   
   try {
-    const response = await fetch('http://localhost:3000/api/shorturl', {
+    const response = await fetch('/api/shorturl', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -13,21 +13,23 @@ document.getElementById('urlForm').addEventListener('submit', async (e) => {
     });
     
     if (!response.ok) {
-      throw new Error('Network response was not ok');
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
     
     const data = await response.json();
     
     if (data.error) {
-      resultDiv.innerHTML = `<p class="error">Error: ${data.error}</p>`;
+      resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
     } else {
       resultDiv.innerHTML = `
-        <p>Original URL: <a href="${data.original_url}" target="_blank">${data.original_url}</a></p>
-        <p>Short URL: <a href="/api/shorturl/${data.short_url}" target="_blank">/api/shorturl/${data.short_url}</a></p>
+        <div class="alert alert-success">
+          <p><strong>Original URL:</strong> <a href="${data.original_url}" target="_blank">${data.original_url}</a></p>
+          <p><strong>Short URL:</strong> <a href="/api/shorturl/${data.short_url}">/api/shorturl/${data.short_url}</a></p>
+        </div>
       `;
     }
-  } catch (err) {
-    resultDiv.innerHTML = `<p class="error">Error: ${err.message}</p>`;
-    console.error('Error:', err);
+  } catch (error) {
+    resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    console.error('Error:', error);
   }
 });
