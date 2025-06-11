@@ -12,24 +12,23 @@ document.getElementById('urlForm').addEventListener('submit', async (e) => {
       body: JSON.stringify({ url: urlInput })
     });
     
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
     const data = await response.json();
     
     if (data.error) {
-      resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
-    } else {
-      resultDiv.innerHTML = `
-        <div class="alert alert-success">
-          <p><strong>Original URL:</strong> <a href="${data.original_url}" target="_blank">${data.original_url}</a></p>
-          <p><strong>Short URL:</strong> <a href="/api/shorturl/${data.short_url}">/api/shorturl/${data.short_url}</a></p>
-        </div>
-      `;
+      resultDiv.innerHTML = `<div class="error">${data.error}</div>`;
+      return;
     }
+    
+    const fullShortUrl = `${window.location.origin}/api/shorturl/${data.short_url}`;
+    
+    resultDiv.innerHTML = `
+      <div class="result">
+        <p><strong>Original URL:</strong> ${data.original_url}</p>
+        <p><strong>Short URL:</strong> <a href="${fullShortUrl}" target="_blank">${fullShortUrl}</a></p>
+        <div class="json">${JSON.stringify(data, null, 2)}</div>
+      </div>
+    `;
   } catch (error) {
-    resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
-    console.error('Error:', error);
+    resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
   }
 });
